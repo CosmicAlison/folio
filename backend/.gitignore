@@ -1,0 +1,48 @@
+# --- Build Artifacts ---
+target/
+build/
+out/
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# --- IDE Specific ---
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+/classes/
+
+# Eclipse
+.metadata/
+bin/
+tmp/
+.settings/
+.classpath
+.project
+.factorypath
+
+# VS Code
+.vscode/
+
+# --- Environment & Configuration ---
+.env
+.env.local
+
+# Environment placeholders and isolated test configuration are tracked.
+application.docker.properties
+# Ignore actual log files, but keep the directory if needed
+*.log
+logs/
+
+# --- Operating System ---
+.DS_Store
+Thumbs.db
+
+# --- Docker ---
+# Only ignore if you want to keep your local DB data out of the repo
+db-data/
