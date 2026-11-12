@@ -4,7 +4,11 @@ import {
   Plus,
   Search,
   ArrowUpRight,
-  Sparkles,
+  MessageSquare,
+  ArrowRight,
+  LockKeyhole,
+  FileText,
+  Layers,
   LayoutGrid,
   List,
   LogOut,
@@ -15,6 +19,7 @@ import {
 } from "lucide-react";
 import { useBlog } from "./components/useBlog";
 import { useAuth } from "./context/AuthContext";
+import ThemeToggle from "./components/ThemeToggle";
 import type { Post } from "./types/types";
 type Answer = {
   answer: string;
@@ -122,147 +127,174 @@ export default function BlogApp() {
   const filtered = blog.posts.filter((p) =>
     `${p.title} ${p.contents}`.toLowerCase().includes(query.toLowerCase()),
   );
-  const words = blog.posts.reduce(
-    (n, p) => n + p.contents.split(/\s+/).filter(Boolean).length,
-    0,
-  );
+  const latest = blog.page === 1 && !query ? blog.posts[0] : undefined;
+  function date(value?: string) {
+    if (!value || Number.isNaN(Date.parse(value))) return "Post";
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(value));
+  }
   return (
     <div className="workspace">
-      <aside className="sidebar">
-        <a className="brand" href="/">
-          <span className="brand-icon">
-            <BookOpen size={21} />
-          </span>
-          folio<span className="brand-dot">.</span>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      <aside className="sidebar" aria-label="Sidebar">
+        <a className="brand" href="/" aria-label="Folio home">
+          <Layers size={25} />
+          <span className="brand-word">folio</span>
         </a>
-        <span className="workspace-label">YOUR WORKSPACE</span>
-        <nav aria-label="Workspace">
-          <button
-            className={view === "library" ? "nav active" : "nav"}
-            onClick={() => {
-              setView("library");
-              setNotice("");
-            }}
-          >
-            <BookOpen size={18} />
-            All posts<span className="count">{blog.totalPosts}</span>
-          </button>
-          <button
-            className={view === "assistant" ? "nav active" : "nav"}
-            onClick={() => {
-              setView("assistant");
-              setNotice("");
-            }}
-          >
-            <Sparkles size={18} />
-            Ask Folio<span className="ai-label">AI</span>
-          </button>
-        </nav>
-        <div className="sidebar-note">
-          <span className="little-star">✳</span>
-          <h3>
-            A little space.
-            <br />A lot of possibility.
-          </h3>
-          <p>Collect your ideas. Find the connections. Keep writing.</p>
-          <button onClick={() => compose("new")}>
-            Write something <ArrowUpRight size={16} />
-          </button>
-        </div>
-        <div className="profile">
-          <span className="avatar">
-            {user?.username.slice(0, 1).toUpperCase()}
-          </span>
-          <div>
-            <strong>{user?.username}</strong>
-            <small>Personal workspace</small>
+        <div
+          className="sidebar-scroll"
+          role="region"
+          tabIndex={0}
+          aria-label="Scrollable sidebar"
+        >
+          <div className="workspace-switch">
+            <span className="workspace-symbol">
+              {user?.username.slice(0, 1).toUpperCase()}
+            </span>
+            <div>
+              <strong>Personal workspace</strong>
+              <small>{user?.username}</small>
+            </div>
+            <LockKeyhole size={13} />
           </div>
-          <button aria-label="Sign out" onClick={logout}>
-            <LogOut size={17} />
-          </button>
+          <span className="nav-label">Workspace</span>
+          <nav aria-label="Workspace">
+            <button
+              aria-label="All posts"
+              aria-pressed={view === "library"}
+              className={view === "library" ? "nav active" : "nav"}
+              onClick={() => {
+                setView("library");
+                setNotice("");
+              }}
+            >
+              <BookOpen size={18} />
+              <span>All posts</span>
+              <span className="count">{blog.totalPosts}</span>
+            </button>
+            <button
+              aria-label="Ask Folio AI"
+              aria-pressed={view === "assistant"}
+              className={view === "assistant" ? "nav active" : "nav"}
+              onClick={() => {
+                setView("assistant");
+                setNotice("");
+              }}
+            >
+              <MessageSquare size={18} />
+              <span>Ask Folio</span>
+              <ArrowUpRight size={14} className="nav-arrow" />
+            </button>
+          </nav>
+          {blog.posts.length > 0 && (
+            <div className="sidebar-posts">
+              <span className="nav-label">On this page</span>
+              {blog.posts.slice(0, 6).map((post) => (
+                <button key={post.id} onClick={() => setReading(post)}>
+                  <FileText size={14} />
+                  <span>{post.title}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="sidebar-footer">
+            <span className="nav-label">Appearance</span>
+            <ThemeToggle />
+            <div className="profile">
+              <span className="avatar">
+                {user?.username.slice(0, 1).toUpperCase()}
+              </span>
+              <div>
+                <strong>{user?.username}</strong>
+                <small>Personal account</small>
+              </div>
+              <button aria-label="Sign out" onClick={logout}>
+                <LogOut size={17} />
+              </button>
+            </div>
+          </div>
         </div>
       </aside>
-      <main className="main">
+      <main className="main" id="main">
         <header className="topbar">
           <span>
-            Workspace <span className="slash">/</span>{" "}
-            {view === "library" ? "All posts" : "Ask Folio"}
+            Personal <span className="slash">/</span>{" "}
+            <strong>{view === "library" ? "Library" : "Ask Folio"}</strong>
           </span>
           <span className="private-label">
-            <span />
-            Private library
+            <LockKeyhole size={13} />
+            Only you
           </span>
         </header>
         <div className="page">
           <div className="page-heading">
             <div>
-              <p className="eyebrow">A HOME FOR YOUR IDEAS</p>
-              <h1>
-                {view === "library"
-                  ? "Your words, together."
-                  : "Find the thread."}
-              </h1>
+              <h1>{view === "library" ? "Library" : "Ask Folio"}</h1>
               <p className="subtitle">
                 {view === "library"
-                  ? "A thoughtful place to write, revisit, and connect the dots."
-                  : "Ask questions. Discover connections across your own writing."}
+                  ? "Write, edit, and revisit your posts."
+                  : "Answers from your writing, with sources attached."}
               </p>
             </div>
             <button className="primary" onClick={() => compose("new")}>
-              <Plus size={18} />
+              <Plus size={17} />
               New post
             </button>
           </div>
           {view === "library" ? (
             <>
-              <section className="overview" aria-label="Library overview">
-                <div className="metric">
-                  <span className="metric-icon">
-                    <BookOpen size={19} />
-                  </span>
-                  <div>
-                    <p>Your library</p>
-                    <strong>
-                      {blog.totalPosts.toString().padStart(2, "0")}
-                    </strong>
-                    <small>posts in your collection</small>
-                  </div>
-                </div>
-                <div className="metric peach">
-                  <span className="metric-icon">
-                    <Pencil size={19} />
-                  </span>
-                  <div>
-                    <p>Words on this page</p>
-                    <strong>{words.toLocaleString()}</strong>
-                    <small>one idea at a time</small>
-                  </div>
-                </div>
-                <button
-                  className="assistant-teaser"
-                  onClick={() => setView("assistant")}
+              {latest && (
+                <section
+                  className="overview"
+                  aria-label="Latest post and library assistant"
                 >
-                  <Sparkles size={24} />
-                  <div>
-                    <strong>Your writing has answers.</strong>
-                    <p>Explore your posts with Ask Folio.</p>
-                    <span>
-                      Start a conversation <ArrowUpRight size={16} />
+                  <article className="featured-post">
+                    <div className="featured-meta">
+                      <span>Recently added</span>
+                      <span>{date(latest.createdAt)}</span>
+                    </div>
+                    <h2>{latest.title}</h2>
+                    <p>{latest.contents}</p>
+                    <button onClick={() => setReading(latest)}>
+                      Continue reading
+                      <ArrowRight size={17} />
+                    </button>
+                  </article>
+                  <button
+                    className="assistant-teaser"
+                    onClick={() => setView("assistant")}
+                  >
+                    <span className="research-icon">
+                      <MessageSquare size={24} />
                     </span>
-                  </div>
-                </button>
-              </section>
-              <section>
+                    <div>
+                      <span className="research-label">Library assistant</span>
+                      <h2>Search your posts.</h2>
+                      <p>Find relevant passages across your entire library.</p>
+                    </div>
+                    <span className="teaser-link">
+                      Ask a question
+                      <ArrowUpRight size={18} />
+                    </span>
+                  </button>
+                </section>
+              )}
+              <section aria-label="Posts">
                 <div className="library-heading">
                   <h2>
                     All posts <span>{blog.totalPosts}</span>
                   </h2>
                   <div className="library-tools">
                     <label className="search">
-                      <Search size={17} />
+                      <Search size={16} />
                       <input
                         aria-label="Search posts on this page"
-                        placeholder="Search this page…"
+                        placeholder="Search this page"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                       />
@@ -273,14 +305,14 @@ export default function BlogApp() {
                         aria-pressed={layout === "grid"}
                         onClick={() => setLayout("grid")}
                       >
-                        <LayoutGrid size={18} />
+                        <LayoutGrid size={16} />
                       </button>
                       <button
                         aria-label="List view"
                         aria-pressed={layout === "list"}
                         onClick={() => setLayout("list")}
                       >
-                        <List size={18} />
+                        <List size={17} />
                       </button>
                     </div>
                   </div>
@@ -291,22 +323,16 @@ export default function BlogApp() {
                   </p>
                 )}
                 {blog.isLoading ? (
-                  <p className="empty" role="status">
-                    Opening your library…
-                  </p>
+                  <div className="empty" role="status">
+                    Loading posts…
+                  </div>
                 ) : filtered.length ? (
                   <div className={`posts ${layout}`}>
-                    {filtered.map((post, i) => (
-                      <article className={`post tone-${i % 3}`} key={post.id}>
+                    {filtered.map((post) => (
+                      <article className="post" key={post.id}>
                         <div className="post-top">
-                          <span className="post-number">
-                            {String((blog.page - 1) * 10 + i + 1).padStart(
-                              2,
-                              "0",
-                            )}{" "}
-                            / NOTE
-                          </span>
-                          <BookOpen size={18} />
+                          <FileText size={15} />
+                          <span>{date(post.createdAt)}</span>
                         </div>
                         <button
                           className="post-read"
@@ -330,7 +356,7 @@ export default function BlogApp() {
                               aria-label={`Edit ${post.title}`}
                               onClick={() => compose(post)}
                             >
-                              <Pencil size={16} />
+                              <Pencil size={15} />
                             </button>
                             <button
                               aria-label={`Delete ${post.title}`}
@@ -339,13 +365,13 @@ export default function BlogApp() {
                                 setRemoving(post);
                               }}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={15} />
                             </button>
                             <button
                               aria-label={`Read ${post.title}`}
                               onClick={() => setReading(post)}
                             >
-                              <ArrowUpRight size={19} />
+                              <ArrowUpRight size={18} />
                             </button>
                           </div>
                         </div>
@@ -354,23 +380,25 @@ export default function BlogApp() {
                   </div>
                 ) : (
                   <div className="empty">
-                    <BookOpen size={35} />
+                    <span className="empty-icon">
+                      <FileText size={28} />
+                    </span>
                     <h3>
                       {query
                         ? "No matching posts on this page"
-                        : "Every idea starts somewhere."}
+                        : "Your library is empty"}
                     </h3>
                     <p>
                       {query
                         ? "Try another search or change pages."
-                        : "Write your first post and make this space your own."}
+                        : "Create a post to start your collection."}
                     </p>
                     {!query && (
                       <button
                         className="primary"
                         onClick={() => compose("new")}
                       >
-                        <Plus size={17} />
+                        <Plus size={16} />
                         Write your first post
                       </button>
                     )}
@@ -378,7 +406,9 @@ export default function BlogApp() {
                 )}
                 <footer className="pagination">
                   <span>
-                    Page {blog.page} of {blog.totalPages}
+                    {blog.totalPosts} posts{" "}
+                    <span className="pagination-divider">/</span> Page{" "}
+                    {blog.page} of {blog.totalPages}
                   </span>
                   <div>
                     <button
@@ -392,6 +422,7 @@ export default function BlogApp() {
                       onClick={() => blog.changePage(blog.page + 1)}
                     >
                       Next
+                      <ArrowRight size={14} />
                     </button>
                   </div>
                 </footer>
@@ -401,19 +432,18 @@ export default function BlogApp() {
             <section className="assistant-panel">
               <div className="assistant-intro">
                 <span className="assistant-mark">
-                  <Sparkles size={30} />
+                  <MessageSquare size={28} />
                 </span>
-                <h2>A conversation with your library.</h2>
+                <h2>What are you looking for?</h2>
                 <p>
-                  Folio searches your posts and shows the passages behind each
-                  answer. Generated answers can make mistakes; check the
-                  sources.
+                  Search across your posts. Folio returns relevant passages and,
+                  when enabled, a generated answer. Check the sources before
+                  relying on an answer.
                 </p>
               </div>
               <div className="suggestions">
                 {[
                   "What have I written about design?",
-                  "What ideas appear across my posts?",
                   "What have I learned about testing?",
                 ].map((q) => (
                   <button key={q} onClick={() => setQuestion(q)}>
@@ -431,13 +461,13 @@ export default function BlogApp() {
                     maxLength={1000}
                     required
                     onChange={(e) => setQuestion(e.target.value)}
-                    placeholder="Ask something about your posts…"
+                    placeholder="Ask about your posts…"
                   />
                   <button
                     className="primary"
                     disabled={busy || !question.trim()}
                   >
-                    <Send size={18} />
+                    <Send size={17} />
                     {busy ? "Searching…" : "Ask Folio"}
                   </button>
                 </div>
@@ -451,35 +481,38 @@ export default function BlogApp() {
                 <div className="answer" aria-live="polite">
                   <span className="mode">
                     {answer.mode === "rag"
-                      ? "AI answer · grounded in your posts"
+                      ? "Generated answer"
                       : "Library search"}
                   </span>
                   <p>{answer.answer}</p>
                   <h3>Sources</h3>
-                  {answer.sources.length === 0 ? (
-                    <p>No matching sources.</p>
-                  ) : (
-                    answer.sources.map((s, i) => (
-                      <div className="source" key={`${s.postId}-${i}`}>
+                  {answer.sources.length ? (
+                    answer.sources.map((source, i) => (
+                      <div className="source" key={`${source.postId}-${i}`}>
                         <strong>
-                          [{s.postId}] {s.title}
+                          [{source.postId}] {source.title}
                         </strong>
-                        <p>{s.excerpt}</p>
+                        <p>{source.excerpt}</p>
                       </div>
                     ))
+                  ) : (
+                    <p>No matching sources.</p>
                   )}
                 </div>
               )}
             </section>
           )}
-          <div className="page-bottom">
-            <span>folio.</span>
-            <p>Make room for your next idea.</p>
-          </div>
         </div>
       </main>
       <dialog
         ref={dialog}
+        aria-label={
+          editor !== null
+            ? "Post editor"
+            : removing
+              ? "Delete post confirmation"
+              : "Read post"
+        }
         onCancel={(e) => {
           e.preventDefault();
           close();
@@ -500,11 +533,9 @@ export default function BlogApp() {
           {editor !== null ? (
             <form onSubmit={save}>
               <span className="mode">
-                {editor === "new" ? "A fresh page" : "Make it your own"}
+                {editor === "new" ? "New post" : "Editing post"}
               </span>
-              <h2>
-                {editor === "new" ? "Let the idea unfold." : "Edit your post."}
-              </h2>
+              <h2>{editor === "new" ? "Create a post" : "Edit post"}</h2>
               <label htmlFor="post-title">Title</label>
               <input
                 autoFocus

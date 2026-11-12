@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { BookOpen, ArrowUpRight } from "lucide-react";
+import { Layers, ArrowUpRight } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,29 +26,23 @@ export default function AuthPage() {
   return (
     <main className="auth-shell">
       <section className="auth-story">
-        <a className="brand" href="/">
-          <span className="brand-icon">
-            <BookOpen size={23} />
-          </span>
-          folio<span className="brand-dot">.</span>
+        <a className="brand" href="/" aria-label="Folio home">
+          <Layers size={25} />
+          <span>folio</span>
         </a>
-        <h1>
-          Good ideas
-          <br />
-          deserve a home.
-        </h1>
-        <p>
-          A private place for your writing. And a thoughtful assistant to help
-          you find what connects it.
-        </p>
+        <h1>A workspace for your writing.</h1>
+        <p>Manage your posts and find answers in what you've written.</p>
       </section>
       <section className="auth-form-area">
+        <div className="auth-appearance">
+          <ThemeToggle />
+        </div>
         <div className="auth-card">
-          <h2>{isLogin ? "Welcome back." : "Make yourself at home."}</h2>
+          <h2>{isLogin ? "Sign in to Folio" : "Create your account"}</h2>
           <p>
             {isLogin
-              ? "Your next idea is waiting for you."
-              : "Start your own collection of thoughts."}
+              ? "Continue to your personal workspace."
+              : "Your posts stay private to your account."}
           </p>
           <div className="auth-tabs">
             <button

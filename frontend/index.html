@@ -1,13 +1,27 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      (() => {
+        let theme;
+        try {
+          theme = localStorage.getItem("folio-theme");
+        } catch {}
+        if (theme !== "light" && theme !== "dark")
+          theme = matchMedia("(prefers-color-scheme: light)").matches
+            ? "light"
+            : "dark";
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
     <meta
       name="description"
       content="Your private blog workspace, with source-grounded answers from your own writing."
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Folio — A home for your ideas</title>
+    <title>Folio | Blog workspace</title>
   </head>
   <body>
     <div id="root"></div>

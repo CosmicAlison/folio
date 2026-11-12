@@ -69,14 +69,14 @@ For this small personal library, chunks and vectors are rebuilt per question. Up
 
 The supplied assessment is a requirements reference, not authorization to email, submit or publish. Scope: REST CRUD, database persistence, input validation, error handling and logging, unit tests, responsive React forms and post list/grid, state management, routing, authentication and Docker. Reading, adding and editing use native dialogs within the protected library route. The rename, visual overhaul and assistant are additions requested by the project owner.
 
-Design direction: warm ivory, olive and clay, quiet typography, rounded modular panels and restrained motion. Inspired by the supplied [CRM reference](https://dribbble.com/shots/25898757-CRM-Mobile-App-UI-Design); the first Financial Management reference could not be retrieved. Search is explicitly scoped to the current page; assistant retrieval covers the entire personal library within the documented bound. Overview numbers derive from real loaded data.
+The interface uses graphite surfaces, cool blue accents, locally bundled Manrope typography, and a content-first library layout. Light and dark themes cover authentication, the workspace, forms and dialogs. Appearance follows the system on the first visit and saves a manual selection locally. The sidebar has its own keyboard-focusable scroll area; narrow screens use a compact navigation rail. The current reference direction comes from the supplied [AI fintech](https://dribbble.com/shots/26497092-AI-Fintech-Mobile-App), [crypto exchange](https://dribbble.com/shots/27521853-Crypto-Exchange-App-UI-Design), and [music app](https://dribbble.com/shots/26914745-AI-Music-Mood-Mobile-App) designs. Search is explicitly scoped to the current page; assistant retrieval covers the entire personal library within the documented bound. Overview numbers derive from real loaded data.
 
 ## Verification in this workspace
 
 - `mvn verify`: 21 backend tests passed; executable JAR packaged.
-- `npm test`: 5 frontend tests passed.
+- `npm test`: 7 frontend tests passed, including both themes, persistence and storage-disabled behavior.
 - `npm run build`: TypeScript and Vite production build passed.
 - `docker compose --profile ai config --quiet`: passed with placeholder environment variables.
 - Local H2 preview: signup and creation of three explicitly labeled example posts succeeded through HTTP.
-- Browser visual verification could not be completed: the in-app webview did not attach, and Computer Use stopped because it could not determine the active Chrome URL reliably. Responsive rules and keyboard semantics are implemented, but no narrow/wide browser or screen-reader pass is claimed.
-- Docker engine was unavailable; container startup, PostgreSQL runtime behavior, and real Ollama inference were not verified. The provider contract was tested against a local HTTP stub.
+- Browser automation is unavailable for the latest design iteration. Both theme states are covered by automated behavior tests; no narrow/wide browser or screen-reader pass is claimed.
+- The initial Compose stack was built and started successfully; PostgreSQL was healthy, the frontend returned HTTP 200 and the protected API returned HTTP 401 without a token. Real Ollama inference is not verified; the provider contract was tested against a local HTTP stub.
