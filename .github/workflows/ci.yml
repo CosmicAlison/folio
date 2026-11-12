@@ -52,9 +52,9 @@ jobs:
         run: docker build -t folio-app:ci .
       - name: Start cloud image against PostgreSQL
         run: >-
-          docker run -d --name folio-cloud-smoke --network folio_default
+          docker run -d --name folio-cloud-smoke --network folio_default --memory 512m
           -p 3001:8080
-          -e DATABASE_URL=jdbc:postgresql://db:5432/folio
+          -e DATABASE_HOST=db -e DATABASE_PORT=5432 -e DATABASE_NAME=folio
           -e DATABASE_USER=folio -e DATABASE_PASSWORD -e JWT_SECRET -e AI_ENABLED
           -e PORT=8080 folio-app:ci
       - name: Exercise combined cloud image

@@ -13,7 +13,7 @@ Requires Docker Desktop (Linux containers) or Docker Engine with Compose.
 
 Nginx serves the SPA and proxies `/api` to Spring, so API URLs are not baked into the frontend. Only the web port is exposed; PostgreSQL persists in a named volume. Set `PORT` to change the web port. `docker compose down` retains data; deleting volumes deletes data.
 
-Builds install dependencies inside containers. Maven and npm caches speed subsequent builds; runtime images run as an unprivileged user. Readiness probes wait for PostgreSQL and the backend before starting the frontend. The default stack contains only `db`, `backend` and `frontend`; local inference is an explicit overlay.
+Builds install dependencies inside containers. Maven and npm caches speed subsequent builds; backend runtime images run as an unprivileged user. Readiness probes wait for PostgreSQL and the backend before starting the frontend. The default stack contains only `db`, `backend` and `frontend`; local inference is an explicit overlay.
 
 ## Deploy a public demo
 
