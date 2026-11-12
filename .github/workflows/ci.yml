@@ -40,6 +40,10 @@ jobs:
         run: |
           docker compose config --quiet
           docker compose -f docker-compose.yaml -f compose.ollama.yaml config --quiet
+      - name: Validate Render Blueprint against current schema
+        run: |
+          python3 -m pip install --disable-pip-version-check PyYAML==6.0.3 jsonschema==4.26.0
+          python3 scripts/validate-blueprint.py
       - name: Build and start repository stack
         run: docker compose up --build -d --wait --wait-timeout 180
       - name: Exercise Compose with PostgreSQL
