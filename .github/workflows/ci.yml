@@ -27,3 +27,41 @@ jobs:
         working-directory: frontend
       - run: npm run build
         working-directory: frontend
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_PASSWORD: ci-only-password
+      JWT_SECRET: Y2ktb25seS1zZWNyZXQtbXVzdC1iZS0zMi1ieXRlcy1sb25nIQ==
+      AI_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate default and optional Compose configurations
+        run: |
+          docker compose config --quiet
+          docker compose -f docker-compose.yaml -f compose.ollama.yaml config --quiet
+      - name: Build and start repository stack
+        run: docker compose up --build -d --wait --wait-timeout 180
+      - name: Exercise Compose with PostgreSQL
+        run: python3 scripts/smoke.py
+      - name: Build single-container cloud image
+        run: docker build -t folio-app:ci .
+      - name: Start cloud image against PostgreSQL
+        run: >-
+          docker run -d --name folio-cloud-smoke --network folio_default
+          -p 3001:8080
+          -e DATABASE_URL=jdbc:postgresql://db:5432/folio
+          -e DATABASE_USER=folio -e DATABASE_PASSWORD -e JWT_SECRET -e AI_ENABLED
+          -e PORT=8080 folio-app:ci
+      - name: Exercise combined cloud image
+        run: python3 scripts/smoke.py --base-url http://127.0.0.1:3001
+      - name: Collect diagnostics
+        if: failure()
+        run: |
+          docker compose logs --no-color --tail 100
+          docker logs --tail 100 folio-cloud-smoke || true
+      - name: Clean up ephemeral CI resources
+        if: always()
+        run: |
+          docker rm -f folio-cloud-smoke || true
+          docker compose down -v

@@ -31,19 +31,24 @@ services:
       AI_API_KEY: ${AI_API_KEY:-}
       AI_MODEL: ${AI_MODEL:-google/gemini-2.5-flash-lite}
       AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-openai/text-embedding-3-small}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 12
   frontend:
     build: ./frontend
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:80"
     depends_on:
-      - backend
-  ollama:
-    image: ollama/ollama:latest
-    profiles: [ai]
-    restart: unless-stopped
-    volumes:
-      - ollama_data:/root/.ollama
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
 volumes:
   postgres_data:
-  ollama_data:

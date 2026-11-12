@@ -7,7 +7,7 @@ import com.alisonpariela.blogmanager.DTO.RegisterRequest;
 
 import com.alisonpariela.blogmanager.service.AuthService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import com.alisonpariela.blogmanager.model.User;
 
 import java.util.Map;
 import jakarta.validation.Valid;
@@ -39,8 +39,9 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal User userDetails) {
         return ResponseEntity.ok(Map.of(
+                "id", userDetails.getId(),
                 "username", userDetails.getUsername(),
                 "authorities", userDetails.getAuthorities()
         ));

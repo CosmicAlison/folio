@@ -8,12 +8,32 @@ Requires Docker Desktop (Linux containers) or Docker Engine with Compose.
 
 1. Copy `.env.example` to `.env`.
 2. Set a random `DATABASE_PASSWORD` and a Base64-encoded 32-byte `JWT_SECRET`. Generate the secret with `openssl rand -base64 32`, or PowerShell 7: `[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))`.
-3. Run `docker compose up --build -d`.
+3. Run `docker compose up --build -d --wait`.
 4. Open http://localhost:3000 and create an account. No seeded users or default credentials.
 
 Nginx serves the SPA and proxies `/api` to Spring, so API URLs are not baked into the frontend. Only the web port is exposed; PostgreSQL persists in a named volume. Set `PORT` to change the web port. `docker compose down` retains data; deleting volumes deletes data.
 
-For an internet deployment, run the same stack on a Docker host behind a TLS reverse proxy, set strong secrets, restrict host access, back up PostgreSQL, and pin reviewed container image digests. This repository prepares deployment; it does not provision cloud infrastructure or publish your data.
+Builds install dependencies inside containers. Maven and npm caches speed subsequent builds; runtime images run as an unprivileged user. Readiness probes wait for PostgreSQL and the backend before starting the frontend. The default stack contains only `db`, `backend` and `frontend`; local inference is an explicit overlay.
+
+## Deploy a public demo
+
+[Deploy Folio on Render](https://dashboard.render.com/blueprint/new?repo=https://github.com/CosmicAlison/folio)
+
+The checked-in `render.yaml` creates a free Docker web service and a free PostgreSQL 16 database in the same region. The root `Dockerfile` bundles the React build inside Spring Boot, serving the UI and `/api` from one HTTPS origin. Render generates the JWT secret and supplies private database credentials; no local `.env` file is uploaded. `/healthz` checks database connectivity. `PORT` selects the listening port on this image.
+
+Connect the repository, review the two free resources and apply the Blueprint. Use the resulting web-service URL for reviewers. This deploy button opens setup; it is not a running demo URL. The cloud database starts empty: sign up to create your own workspace. Existing local data is not copied.
+
+Render's free web service sleeps after 15 minutes of inactivity and can take around a minute to wake. Its free database expires after 30 days. This configuration is for a temporary assessment demo; choose a paid database and backup policy for lasting use. See [free-tier limits](https://render.com/docs/free).
+
+The Blueprint initially sets `AI_ENABLED=false`, so CRUD and passage search work without provider charges. To enable generated answers, add `AI_API_KEY` as a service secret and change `AI_ENABLED` to `"true"` in the Blueprint, then sync and deploy. Use a provider spending cap and available credits. A Dashboard-only change to a variable managed by the Blueprint can be overwritten on the next sync. Never put the secret value in `render.yaml`.
+
+After deployment, run the dependency-free HTTP check from any machine with Python 3:
+
+```sh
+python scripts/smoke.py --base-url https://YOUR-SERVICE.onrender.com
+```
+
+It verifies the frontend, JavaScript assets, login routing, protected API, signup/login, PostgreSQL CRUD and cited passage search. It creates and removes a temporary account and post. Add `--check-ai` only when generation is enabled and provider calls are intended.
 
 ## Hosted AI (recommended)
 
@@ -46,29 +66,27 @@ API contracts: [embeddings](https://openrouter.ai/docs/api/api-reference/embeddi
 
 ## Optional local AI
 
-Ollama remains available for users who explicitly want local inference. This route needs substantial disk space for the runtime image and models. It is not required for reviewing the project.
+Ollama is defined only in the separate `compose.ollama.yaml` overlay. The default Compose file contains no local inference service or model volume. Local inference needs substantial free disk space and is not required for reviewing the project.
 
-Set all of the following in `.env` when using the Docker profile:
-
-```dotenv
-AI_ENABLED=true
-AI_PROVIDER=ollama
-AI_URL=http://ollama:11434
-AI_API_KEY=
-AI_MODEL=gemma3:1b
-AI_EMBEDDING_MODEL=embeddinggemma
-```
-
-Then start the optional service, pull the matching models, and recreate the app with this configuration:
+The overlay selects Ollama and its local model names without changing the hosted settings in `.env`. Start the optional service, pull the default models, then build and start the app with the same overlay:
 
 ```sh
-docker compose --profile ai up -d ollama
-docker compose exec -T ollama ollama pull embeddinggemma
-docker compose exec -T ollama ollama pull gemma3:1b
-docker compose --profile ai up --build -d
+docker compose -f docker-compose.yaml -f compose.ollama.yaml up -d ollama
+docker compose -f docker-compose.yaml -f compose.ollama.yaml exec -T ollama ollama pull embeddinggemma
+docker compose -f docker-compose.yaml -f compose.ollama.yaml exec -T ollama ollama pull gemma3:1b
+docker compose -f docker-compose.yaml -f compose.ollama.yaml up --build -d
 ```
 
-For a native backend talking to an Ollama process on the same machine, use `AI_URL=http://localhost:11434` instead.
+Optional `OLLAMA_MODEL` and `OLLAMA_EMBEDDING_MODEL` variables override those defaults; pull the matching names when overriding them. The overlay deliberately clears the hosted API key from the local backend environment.
+
+To return to hosted AI after running an older local stack:
+
+```sh
+docker compose -f docker-compose.yaml -f compose.ollama.yaml stop ollama
+docker compose up --build -d --force-recreate backend frontend
+```
+
+Stopping Ollama retains its model volume. These commands do not delete the PostgreSQL volume. For a native backend using local inference, configure `AI_PROVIDER=ollama`, `AI_URL=http://localhost:11434`, and matching local `AI_MODEL` / `AI_EMBEDDING_MODEL` values.
 
 ## Local development
 
@@ -89,7 +107,7 @@ npm test
 npm run build
 ```
 
-Backend tests cover ownership, CRUD, JWT types, chunking, ranking, retrieval isolation, hosted/local provider selection, authenticated provider requests, embedding index ordering, invalid responses and safe provider errors. All provider contract tests use local HTTP stubs and require no real key, credits or model downloads. HTTP integration tests exercise validation, authentication, serialization and cross-user CRUD / assistant access. H2 runs in PostgreSQL compatibility mode for tests; it is not a substitute for PostgreSQL deployment testing. Frontend tests cover reading/filtering, failed-save preservation, successful saves, delete confirmation, cited answers, provider error display and persistent light/dark themes. GitHub Actions runs both suites and the frontend build.
+Backend tests cover ownership, CRUD, JWT types, chunking, ranking, retrieval isolation, hosted/local provider selection, authenticated provider requests, embedding index ordering, invalid responses and safe provider errors. All provider contract tests use local HTTP stubs and require no real key, credits or model downloads. HTTP integration tests exercise validation, authentication, serialization, deployment routes and cross-user CRUD / assistant access. H2 runs in PostgreSQL compatibility mode for tests. Frontend tests cover reading/filtering, failed-save preservation, successful saves, delete confirmation, cited answers, provider error display and persistent light/dark themes. GitHub Actions runs both suites and the frontend build, builds the actual Compose stack, tests it against PostgreSQL, then builds and tests the combined cloud image. No live AI credentials are needed in CI.
 
 ## Architecture and RAG
 
@@ -119,14 +137,14 @@ The interface uses graphite surfaces, cool blue accents, locally bundled Manrope
 3. To evaluate generated answers, configure the server-side hosted key, create a post with a specific fact, and ask about that fact in Ask Folio. Check the returned passage and citation.
 4. Verify user isolation with a second account and confirm that edited/deleted text no longer appears in subsequent answers.
 
-For a browser-only review, deploy the same app and configure its hosted AI key on the server. The live demo and its budget must be operated by the project owner; reviewers should not need to supply a personal key. No public demo is provisioned by this repository.
+For a browser-only review, use the public demo deployment above and configure its hosted AI key on the server. The live demo and its budget must be operated by the project owner; reviewers should not need to supply a personal key.
 
 ## Verification in this workspace
 
 - Backend verification packages an executable JAR and exercises hosted AI against an HTTP stub.
 - Frontend checks include both themes, persistence, storage-disabled behavior and hosted-provider error messages.
 - `npm run build`: TypeScript and Vite production build passed.
-- `docker compose --profile ai config --quiet`: passed with placeholder environment variables.
+- `docker compose config --quiet`: passed with placeholder environment variables.
 - Local H2 preview: signup and creation of three explicitly labeled example posts succeeded through HTTP.
 - Browser automation is unavailable for the latest design iteration. Both theme states are covered by automated behavior tests; no narrow/wide browser or screen-reader pass is claimed.
-- The initial Compose stack was built and started successfully; PostgreSQL was healthy, the frontend returned HTTP 200 and the protected API returned HTTP 401 without a token. Live model inference is not verified without a configured key; hosted and Ollama contracts are tested against local HTTP stubs.
+- The initial Compose stack was built and started successfully; PostgreSQL was healthy, the frontend returned HTTP 200 and the protected API returned HTTP 401 without a token. Hosted and Ollama contracts are tested against local HTTP stubs. Live inference requires a configured provider key with available credit.

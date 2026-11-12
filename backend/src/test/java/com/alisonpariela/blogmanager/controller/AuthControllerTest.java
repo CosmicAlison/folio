@@ -24,7 +24,7 @@ class AuthControllerTest {
             .andExpect(status().isOk()).andReturn();
         var tokens = new tools.jackson.databind.ObjectMapper().readTree(login.getResponse().getContentAsString());
         mvc.perform(get("/api/auth/me").header("Authorization","Bearer "+tokens.get("accessToken").asText()))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.username").value("newwriter")).andExpect(jsonPath("$.password").doesNotExist());
+            .andExpect(status().isOk()).andExpect(jsonPath("$.id").isNumber()).andExpect(jsonPath("$.username").value("newwriter")).andExpect(jsonPath("$.password").doesNotExist());
         mvc.perform(get("/api/posts").header("Authorization","Bearer "+tokens.get("refreshToken").asText())).andExpect(status().isUnauthorized());
     }
 }

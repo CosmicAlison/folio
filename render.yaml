@@ -1,0 +1,52 @@
+# Free assessment demo; see README for sleep and database-expiry limits.
+services:
+  - type: web
+    name: folio
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_HOST
+        fromDatabase:
+          name: folio-db
+          property: host
+      - key: DATABASE_PORT
+        fromDatabase:
+          name: folio-db
+          property: port
+      - key: DATABASE_NAME
+        fromDatabase:
+          name: folio-db
+          property: database
+      - key: DATABASE_USER
+        fromDatabase:
+          name: folio-db
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: folio-db
+          property: password
+      - key: AI_ENABLED
+        value: "false"
+      - key: AI_PROVIDER
+        value: hosted
+      - key: AI_URL
+        value: https://openrouter.ai/api/v1
+      - key: AI_MODEL
+        value: google/gemini-2.5-flash-lite
+      - key: AI_EMBEDDING_MODEL
+        value: openai/text-embedding-3-small
+databases:
+  - name: folio-db
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: "16"
+    databaseName: folio
+    user: folio
+    ipAllowList: []
