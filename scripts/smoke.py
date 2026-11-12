@@ -4,6 +4,7 @@ Creates a temporary account and removes its post/account before returning.
 Pass --check-ai only when provider calls and their cost are intended.
 """
 import argparse
+from http.client import HTTPException
 import json
 import re
 import secrets
@@ -45,7 +46,7 @@ def main():
         try:
             if request('GET', '/healthz') == {'status': 'ok'}:
                 break
-        except (URLError, TimeoutError, RuntimeError):
+        except (OSError, HTTPException, RuntimeError):
             pass
         if time.monotonic() >= deadline:
             raise RuntimeError('Deployment did not become ready before the deadline')
