@@ -71,3 +71,5 @@ npm test
 ```
 
 For cloud deployment, [use the Render configuration](https://dashboard.render.com/blueprint/new?repo=https://github.com/CosmicAlison/folio). It serves the frontend and API together with a managed PostgreSQL database.
+
+The Blueprint enables hosted AI and asks for `AI_API_KEY` during initial setup. For an existing service, add the key in Render's Environment settings, sync the Blueprint and redeploy. The key stays out of Git and needs available provider credit.

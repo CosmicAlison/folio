@@ -33,7 +33,9 @@ services:
           name: folio-db
           property: password
       - key: AI_ENABLED
-        value: "false"
+        value: "true"
+      - key: AI_API_KEY
+        sync: false
       - key: AI_PROVIDER
         value: hosted
       - key: AI_URL
