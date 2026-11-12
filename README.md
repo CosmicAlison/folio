@@ -1,5 +1,7 @@
 # Folio
 
+## Preview: [link](https://folio-ug3h.onrender.com/)
+
 Folio is a private blog workspace. Create an account, write posts, browse your library, and update or delete your writing.
 
 I also added **Ask Folio**, an assistant that answers questions using your own posts and shows the passages behind its answers.
