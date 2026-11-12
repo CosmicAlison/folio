@@ -9,7 +9,7 @@ import json
 import re
 import secrets
 import time
-from urllib.error import HTTPError, URLError
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 
@@ -23,7 +23,7 @@ def main():
     token = None
 
     def request(method, path, data=None, expected=200):
-        headers = {'Accept': 'application/json'}
+        headers = {'Accept': '*/*'}
         if token:
             headers['Authorization'] = 'Bearer ' + token
         body = None
