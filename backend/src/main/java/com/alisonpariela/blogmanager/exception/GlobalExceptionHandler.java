@@ -27,6 +27,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> validation(MethodArgumentNotValidException e) {
         return error(400, String.join("; ", e.getBindingResult().getFieldErrors().stream().map(f -> f.getField() + ": " + f.getDefaultMessage()).toList()));
     }
+    @ExceptionHandler(com.alisonpariela.blogmanager.ai.AiProviderException.class)
+    public ResponseEntity<?> providerUnavailable(com.alisonpariela.blogmanager.ai.AiProviderException e) {
+        return error(503, e.getMessage());
+    }
     @ExceptionHandler({RestClientException.class, IllegalStateException.class})
     public ResponseEntity<?> unavailable(Exception e) { log.warn("Assistant service unavailable: {}", e.getClass().getSimpleName()); return error(503, "AI service unavailable. Please try again later."); }
     @ExceptionHandler(Exception.class)

@@ -1,5 +1,7 @@
 package com.alisonpariela.blogmanager.service;
 import com.alisonpariela.blogmanager.model.*;
+import com.alisonpariela.blogmanager.ai.AiClient;
+import com.alisonpariela.blogmanager.ai.OllamaAiClient;
 import com.alisonpariela.blogmanager.repository.PostRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -9,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 class BlogAssistantTest {
     PostRepository posts = mock(PostRepository.class);
-    BlogAssistant assistant = new BlogAssistant(posts,"http://localhost:1",false,"embed","model");
+    BlogAssistant assistant = new BlogAssistant(posts,mock(AiClient.class),false);
     @BeforeEach void auth() { var user = new User(); user.setId(7L); SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user,null,List.of())); }
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
     @Test void chunksOverlapAndPreserveTail() { var text = "x".repeat(1900); var chunks = BlogAssistant.chunks(text); assertEquals(3,chunks.size()); assertEquals(500,chunks.get(2).length()); }
@@ -43,7 +45,7 @@ class BlogAssistantTest {
         try {
             var post = new Post(); post.setId(3L); post.setTitle("Design notes"); post.setContents("Accessible design uses clear labels.");
             when(posts.findByUserId(7L)).thenReturn(List.of(post));
-            var rag = new BlogAssistant(posts,"http://127.0.0.1:"+server.getAddress().getPort(),true,"embed","model");
+            var rag = new BlogAssistant(posts,new OllamaAiClient("http://127.0.0.1:"+server.getAddress().getPort(),"embed","model"),true);
             var answer = rag.ask("design");
             assertEquals("rag",answer.mode()); assertEquals("Use clear labels [3].",answer.answer());
             assertEquals(3L,answer.sources().get(0).postId());

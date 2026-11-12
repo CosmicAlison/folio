@@ -95,22 +95,20 @@ describe("Folio workspace", () => {
   it("shows cited assistant answers", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: true,
-          json: async () => ({
-            answer: "Labels matter [1]",
-            mode: "rag",
-            sources: [
-              {
-                postId: 1,
-                title: "Design notes",
-                excerpt: "Clear labels matter.",
-              },
-            ],
-          }),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          answer: "Labels matter [1]",
+          mode: "rag",
+          sources: [
+            {
+              postId: 1,
+              title: "Design notes",
+              excerpt: "Clear labels matter.",
+            },
+          ],
         }),
+      }),
     );
     render(<BlogApp />);
     fireEvent.click(screen.getByRole("button", { name: "Ask Folio AI" }));
@@ -120,5 +118,27 @@ describe("Folio workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ask Folio" }));
     expect(await screen.findByText("Labels matter [1]")).toBeInTheDocument();
     expect(screen.getByText("[1] Design notes")).toBeInTheDocument();
+  });
+  it("shows the safe server error when hosted AI cannot answer", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 503,
+        json: async () => ({
+          message: "The AI provider account has no available credits.",
+        }),
+      }),
+    );
+    render(<BlogApp />);
+    fireEvent.click(screen.getByRole("button", { name: "Ask Folio AI" }));
+    fireEvent.change(screen.getByLabelText("Your question"), {
+      target: { value: "design" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Ask Folio" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The AI provider account has no available credits.",
+    );
+    expect(screen.queryByText("Sources")).not.toBeInTheDocument();
   });
 });

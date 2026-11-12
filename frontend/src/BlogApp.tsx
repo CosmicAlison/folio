@@ -114,11 +114,21 @@ export default function BlogApp() {
           body: JSON.stringify({ question }),
         },
       );
-      if (!response.ok) throw new Error();
+      if (!response.ok) {
+        const problem = await response.json().catch(() => null);
+        throw new Error(
+          response.status === 401
+            ? "Your session expired. Please sign in again."
+            : problem?.message ||
+              "The assistant is unavailable. Please try again.",
+        );
+      }
       setAnswer(await response.json());
-    } catch {
+    } catch (err) {
       setNotice(
-        "The assistant is unavailable. Check your connection and AI service, then try again.",
+        err instanceof Error && !(err instanceof TypeError)
+          ? err.message
+          : "Could not connect to the assistant. Please try again.",
       );
     } finally {
       setBusy(false);
